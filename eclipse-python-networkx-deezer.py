@@ -6,8 +6,15 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import time
 import sys
+import os
 import json
+import signal
 
+# import own helper-modules
+sys.path.append(os.path.abspath(os.path.join(os.path.realpath(__file__),"../../networkx_modules")))
+from helpers.generalStuff import *
+from helpers.networkx_load_n_save import *
+from algoPackage.pageRank import *
 
 from builtins import len
 from networkx.algorithms.coloring.greedy_coloring_with_interchange import Node
@@ -16,23 +23,12 @@ from networkx.readwrite import json_graph;
 from _operator import itemgetter
 from matplotlib.pyplot import plot
 
-def to_ms(time):
-    return ("%.3f" % time)
+#def to_ms(time):
+#    return ("%.3f" % time)
 
-def save(G, fname):
-        for u,v in G.edges():
-            print("EDGES: ")
-        time.sleep(2) 
-        print(str(edges))
-        
-              #open(fname, 'w'), indent=2)
-
-def load(fname):
-    G = nx.DiGraph()
-    d = json.load(open(fname))
-    G.add_nodes_from(d['nodes'])
-    G.add_edges_from(d['edges'])
-    return G
+def cleanupAll(tmpfilepath):
+    print("CLEANING UP.")
+    os.remove(tmpfilepath)
 
 def get_column_names(filereader):
   headers = next(filereader, None)
@@ -130,32 +126,45 @@ def algo_shortest_path(G):
             #print("PATH: " + str(path))
         i = i + 1
     print("RUNTIME ShortestPath - " + str(_limit).split("_")[1] + " entries - " + str(numberOfUsers) + " users : " + to_ms(time.time() - algoTime) + ". Checked " + str(pathcount) + " paths." )
-        
 
-limit = sys.argv[1]
-if limit == None:
-    print("GIVE AN ARGUMENT")
-    sys.exit(1)
+filepath='/home/pagai/graph-data/deezer_clean_data/both.csv'    
+tmpfilepath = "/tmp/tmpfile.csv"
+limit = 0
+
+#catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
+#for sig in catchable_sigs:
+#    signal.signal(sig, tmpfilepath)  # Substitute handler of choice for `print`
+
+if (len(sys.argv) == 1):
+    print("NOTHING WAS GIVEN")
+    limit = "all"
+else: 
+    limit = sys.argv[1]
+    print("LOADING " + str(limit) + " LINES FROM " + filepath)
+
 if limit != "all":
-    _limit = "_" + str(limit)
-    filepath='/home/pagai/graph-data/deezer_clean_data/RO_edges' + _limit + '.csv'
-elif limit == "all":
-# getting number of all entries in file
-    filepath='/home/pagai/graph-data/deezer_clean_data/RO_edges.csv'
-    _limit=0
-    f = open(filepath, 'r')
-    for line in f:
-        _limit = _limit + 1
-    _limit = "_" + str(_limit)         
+    cleanup = True
+# get number of lines of file
+    with open(filepath) as f:
+        allLines = [next(f) for x in range(int(limit))]
+        tmpFile = open(tmpfilepath, 'w+')
+        for line in allLines:
+            tmpFile.write(line)
+    tmpFile.close()
+    filepath = tmpfilepath
     
-
+    
 # Loading headers
 
 #header_reader = csv.reader(file)
 #print(get_column_names(header_reader))
 
-G = nx.Graph()
-G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.Graph(), nodetype=str)
+#G = nx.Graph()
+start_time = time.time()
+G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
+
+print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + " s.")
+#print(nx.info(G))
 #draw_graph(G)
 
 #edgelist = []
@@ -173,7 +182,10 @@ G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_usi
 
 #algo_shortest_path(G)
 #all_pairs_shortest_path(G)
-draw_all_shortest_path_for_single_node(G,"1")
+algo_pagerank(G, None, "default", False)
+algo_pagerank(G, None, "numpy", False)
+algo_pagerank(G, None, "scipy", False)     
+#draw_all_shortest_path_for_single_node(G,"1")
 #all_shortest_path_for_single_node(G,"12")
 
 
