@@ -5,16 +5,17 @@ import csv
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
-import sys
-import os
 import json
 import signal
 
 # import own helper-modules
+import sys
+import os
 sys.path.append(os.path.abspath(os.path.join(os.path.realpath(__file__),"../../networkx_modules")))
 from helpers.generalStuff import *
 from helpers.networkx_load_n_save import *
 from algoPackage.pageRank import *
+from algoPackage.simRank import *
 
 from builtins import len
 from networkx.algorithms.coloring.greedy_coloring_with_interchange import Node
@@ -153,9 +154,7 @@ if limit != "all":
     tmpFile.close()
     filepath = tmpfilepath
     
-    
 # Loading headers
-
 #header_reader = csv.reader(file)
 #print(get_column_names(header_reader))
 
@@ -164,6 +163,7 @@ start_time = time.time()
 G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
 
 print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + " s.")
+
 #print(nx.info(G))
 #draw_graph(G)
 
@@ -182,9 +182,10 @@ print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + 
 
 #algo_shortest_path(G)
 #all_pairs_shortest_path(G)
-algo_pagerank(G, None, "default", False)
-algo_pagerank(G, None, "numpy", False)
-algo_pagerank(G, None, "scipy", False)     
+#algo_pagerank(G, None, "default", False)
+#algo_pagerank(G, None, "numpy", False)
+#algo_pagerank(G, None, "scipy", False)
+algo_simRank(G)     
 #draw_all_shortest_path_for_single_node(G,"1")
 #all_shortest_path_for_single_node(G,"12")
 
