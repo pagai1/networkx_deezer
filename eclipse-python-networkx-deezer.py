@@ -14,8 +14,11 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.realpath(__file__),"../../networkx_modules")))
 from helpers.generalStuff import *
 from helpers.networkx_load_n_save import *
+from helpers.search_functions import *
 from algoPackage.pageRank import *
 from algoPackage.simRank import *
+from algoPackage.hits import *
+from algoPackage.shortestPath import *
 
 from builtins import len
 from networkx.algorithms.coloring.greedy_coloring_with_interchange import Node
@@ -39,16 +42,6 @@ def draw_graph(Graph):
     nx.draw_kamada_kawai(Graph,with_labels=True)
     plt.plot()
     plt.show()
-
-def all_pairs_shortest_path(G):
-    numberOfUsers = len(G.nodes())
-    user_list = list(G.nodes())
-    numberOfUsers = len(user_list)
-    algoTime=time.time()
-    paths = nx.all_pairs_shortest_path(G)
-    runTime=(time.time() - algoTime)
-    print(paths["1"]["23250"])
-    print("RUNTIME AllPairsShortestPath - " + str(_limit).split("_")[1] + " eges - " + str(numberOfUsers) + " users : " + str(runTime) )
 
 def draw_all_shortest_path_for_single_node(G, source):
     pos = nx.spring_layout(G)
@@ -128,20 +121,40 @@ def algo_shortest_path(G):
         i = i + 1
     print("RUNTIME ShortestPath - " + str(_limit).split("_")[1] + " entries - " + str(numberOfUsers) + " users : " + to_ms(time.time() - algoTime) + ". Checked " + str(pathcount) + " paths." )
 
-filepath='/home/pagai/graph-data/deezer_clean_data/both.csv'    
+#
+# MAIN
+#
+#
+#filepath='/home/pagai/graph-data/deezer_clean_data/both.csv'    
+filepath='/home/pagai/graph-data/pokec/soc-pokec-relationships_weighted.txt'
 tmpfilepath = "/tmp/tmpfile.csv"
 limit = 0
-
+seclimit=1
+operatorFunction="eq"
+verbose=False
 #catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
 #for sig in catchable_sigs:
 #    signal.signal(sig, tmpfilepath)  # Substitute handler of choice for `print`
 
 if (len(sys.argv) == 1):
-    print("NOTHING WAS GIVEN")
+    if (verbose):
+        print("NOTHING WAS GIVEN")
     limit = "all"
-else: 
+elif (len(sys.argv) == 2):
     limit = sys.argv[1]
-    print("LOADING " + str(limit) + " LINES FROM " + filepath)
+    if (verbose):
+        print("LOADING " + str(limit) + " LINES FROM " + filepath)
+elif (len(sys.argv) == 3):
+    limit = sys.argv[1] 
+    seclimit = sys.argv[2]
+    if (verbose):
+        print("LOADING " + str(limit) + " LINES FROM " + filepath + " AND " + str(seclimit) + " DEGREE.")
+elif (len(sys.argv) == 4):    
+    limit = sys.argv[1] 
+    seclimit = int(sys.argv[2])
+    operatorFunction=sys.argv[3]
+    if (verbose):
+        print("LOADING " + str(limit) + " LINES FROM " + filepath + " AND DEGREE " + operatorFunction + " " + str(seclimit))    
 
 if limit != "all":
     cleanup = True
@@ -160,11 +173,19 @@ if limit != "all":
 
 #G = nx.Graph()
 start_time = time.time()
-G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
+G = nx.read_weighted_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
+#G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
 
-print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + " s.")
+if (verbose):
+    print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + " s.")
+    print(nx.info(G))
+    print("########################")
 
-#print(nx.info(G))
+
+find_nodes_by_degree(G,seclimit,function=operatorFunction, verbose=False)
+#find_nodes_by_property_value(G,"property","value")
+
+
 #draw_graph(G)
 
 #edgelist = []
@@ -174,18 +195,21 @@ print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + 
 #for edge in edgelist:
 #    print(str(edge[0]) + " -- " + str(edge[1]))
 
-
 ############################# ALGOS
 
 
 
 
 #algo_shortest_path(G)
+#algo_all_pairs_dijkstra(G,verbose=True,inputWeight='weight')
+#algo_all_pairs_bellman_ford_path(G,verbose=True,inputWeight='weight')
+
 #all_pairs_shortest_path(G)
 #algo_pagerank(G, None, "default", False)
 #algo_pagerank(G, None, "numpy", False)
-#algo_pagerank(G, None, "scipy", False)
-algo_simRank(G)     
+#algo_pagerank(G, None , "scipy", True)
+#algo_simRank(G,verbose=True)
+#get_hits(G)
 #draw_all_shortest_path_for_single_node(G,"1")
 #all_shortest_path_for_single_node(G,"12")
 
