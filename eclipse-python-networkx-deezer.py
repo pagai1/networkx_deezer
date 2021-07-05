@@ -19,6 +19,8 @@ from algoPackage.pageRank import *
 from algoPackage.simRank import *
 from algoPackage.hits import *
 from algoPackage.shortestPath import *
+from algoPackage.jaccard_coefficient import *
+from algoPackage.degree_centrality import *
 
 from builtins import len
 from networkx.algorithms.coloring.greedy_coloring_with_interchange import Node
@@ -174,6 +176,10 @@ if limit != "all":
 #G = nx.Graph()
 start_time = time.time()
 G = nx.read_weighted_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
+for node in (G.nodes()):
+    G.nodes[node]['name'] = str(node)
+
+#for node in (G.nodes())
 #G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
 
 if (verbose):
@@ -182,7 +188,7 @@ if (verbose):
     print("########################")
 
 
-find_nodes_by_degree(G,seclimit,function=operatorFunction, verbose=False)
+#find_nodes_by_degree(G,seclimit,function=operatorFunction, verbose=verbose)
 #find_nodes_by_property_value(G,"property","value")
 
 
@@ -208,7 +214,20 @@ find_nodes_by_degree(G,seclimit,function=operatorFunction, verbose=False)
 #algo_pagerank(G, None, "default", False)
 #algo_pagerank(G, None, "numpy", False)
 #algo_pagerank(G, None , "scipy", True)
-#algo_simRank(G,verbose=True)
+#algo_simRank(G,verbose=True,max_iterations=1)
+#algo_degree_centrality(G, verbose=False)
+
+start_time=time.time()
+#peng = sorted(G.degree, key=lambda x: x[1], reverse=True)
+algo_degree_centrality(G, verbose=False)
+end_time=time.time()
+
+#print("TIME: " + to_ms(end_time - start_time))
+
+    
+#print(str(G.number_of_nodes()) + "," + str(G.number_of_edges()) + "," + to_ms(end_time-start_time))
+#algo_jaccard_coefficient(G,G.edges(),verbose=True) 
+
 #get_hits(G)
 #draw_all_shortest_path_for_single_node(G,"1")
 #all_shortest_path_for_single_node(G,"12")
