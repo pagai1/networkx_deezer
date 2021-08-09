@@ -134,9 +134,15 @@ limit = 0
 seclimit=1
 operatorFunction="eq"
 verbose=False
+doExport=False
+createByImport=True
+doAlgo=True
+algoVerbose=False
+
 #catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
 #for sig in catchable_sigs:
 #    signal.signal(sig, tmpfilepath)  # Substitute handler of choice for `print`
+
 
 if (len(sys.argv) == 1):
     if (verbose):
@@ -145,18 +151,18 @@ if (len(sys.argv) == 1):
 elif (len(sys.argv) == 2):
     limit = sys.argv[1]
     if (verbose):
-        print("LOADING " + str(limit) + " LINES FROM " + filepath)
+        print("LOADING " + str(limit) + " LINES ")
 elif (len(sys.argv) == 3):
     limit = sys.argv[1] 
     seclimit = sys.argv[2]
     if (verbose):
-        print("LOADING " + str(limit) + " LINES FROM " + filepath + " AND " + str(seclimit) + " DEGREE.")
+        print("LOADING " + str(limit) + " LINES AND " + str(seclimit) + " DEGREE.")
 elif (len(sys.argv) == 4):    
     limit = sys.argv[1] 
     seclimit = int(sys.argv[2])
     operatorFunction=sys.argv[3]
     if (verbose):
-        print("LOADING " + str(limit) + " LINES FROM " + filepath + " AND DEGREE " + operatorFunction + " " + str(seclimit))    
+        print("LOADING " + str(limit) + " LINES AND DEGREE " + operatorFunction + " " + str(seclimit))    
 
 if limit != "all":
     cleanup = True
@@ -168,69 +174,77 @@ if limit != "all":
             tmpFile.write(line)
     tmpFile.close()
     filepath = tmpfilepath
+
+if not createByImport:    
+    start_time = time.time()
+    G = nx.read_weighted_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
+    for node in (G.nodes()):
+        G.nodes[node]['name'] = str(node)
+
+    if (verbose):
+        print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + " s.")
+        print(nx.info(G))
+        print("########################")
+
+############ Export/Import ##########
+if createByImport:
+    importFile='/tmp/node_link_data_export_'+str(limit)+'.json'
+    print("IMPORTING " + importFile)
+    start_time = time.time()
+    G = import_node_link_data_to_graph(importFile, verbose=verbose)
+    if (verbose): 
+        print("IMPORTED FILE: " + importFile)
+        print(nx.info(G))
+
+if doExport:
+    export_graph_to_node_link_data(G, '/tmp/node_link_data_export_'+str(limit)+'.json', verbose=verbose)
+
+if doAlgo:
+############ ALGOS #############
     
-# Loading headers
-#header_reader = csv.reader(file)
-#print(get_column_names(header_reader))
-
-#G = nx.Graph()
-start_time = time.time()
-G = nx.read_weighted_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
-for node in (G.nodes()):
-    G.nodes[node]['name'] = str(node)
-
-#for node in (G.nodes())
-#G = nx.read_edgelist(filepath, comments="no comments", delimiter=",", create_using=nx.DiGraph(), nodetype=str)
-
-if (verbose):
-    print("Load of " + limit + " finished in: " + to_ms(time.time() - start_time) + " s.")
-    print(nx.info(G))
-    print("########################")
-
-
-#find_nodes_by_degree(G,seclimit,function=operatorFunction, verbose=verbose)
-#find_nodes_by_property_value(G,"property","value")
-
-
-#draw_graph(G)
-
-#edgelist = []
-#nodelist = []
-#edgelist = G.edges()
-#nodelist = G.nodes()
-#for edge in edgelist:
-#    print(str(edge[0]) + " -- " + str(edge[1]))
-
-############################# ALGOS
-
-
-
-
-#algo_shortest_path(G)
-#algo_all_pairs_dijkstra(G,verbose=True,inputWeight='weight')
-#algo_all_pairs_bellman_ford_path(G,verbose=True,inputWeight='weight')
-
-#all_pairs_shortest_path(G)
-#algo_pagerank(G, None, "default", False)
-#algo_pagerank(G, None, "numpy", False)
-#algo_pagerank(G, None , "scipy", True)
-#algo_simRank(G,verbose=True,max_iterations=1)
-#algo_degree_centrality(G, verbose=False)
-
-start_time=time.time()
-#peng = sorted(G.degree, key=lambda x: x[1], reverse=True)
-algo_degree_centrality(G, verbose=False)
-end_time=time.time()
-
-#print("TIME: " + to_ms(end_time - start_time))
-
+    #algo_shortest_path(G)
+    #algo_all_pairs_dijkstra(G,verbose=True,inputWeight='weight')
+    #algo_all_pairs_bellman_ford_path(G,verbose=True,inputWeight='weight')
     
-#print(str(G.number_of_nodes()) + "," + str(G.number_of_edges()) + "," + to_ms(end_time-start_time))
-#algo_jaccard_coefficient(G,G.edges(),verbose=True) 
-
-#get_hits(G)
-#draw_all_shortest_path_for_single_node(G,"1")
-#all_shortest_path_for_single_node(G,"12")
+    #all_pairs_shortest_path(G)
+    
+    #### PAGERANK
+    weightInputForAlgos="weight"
+    #weightInputForAlgos=None
+    
+    print("==============================")
+    #algo_pagerank(G, "default",  weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=15)
+    # NUMPY IS OBSOLETE
+    #algo_pagerank(G, "numpy", weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=10)
+    algo_pagerank(G, "scipy", weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=0)
+    print("==============================")
+    print("EXECUTION TOOK: " + to_ms(time.time() - start_time))
+    
+    
+    #### SIMRANK
+    #algo_simRank(G,verbose=True,max_iterations=1)
+    #algo_degree_centrality(G, verbose=True)
+    #algo_all_pairs_shortest_path(G,verbose=False,inputWeight='weight')
+    
+    #### OWN DEGREE CENTRALITY
+    #peng = sorted(G.degree, key=lambda x: x[1], reverse=True)
+    #if (verbose):
+    #    for bums in peng:
+    #        print(bums)
+    
+    
+    #algo_degree_centrality(G, verbose=False)
+    
+    
+    #print("TIME: " + to_ms(end_time - start_time))
+    
+        
+    #print(str(G.number_of_nodes()) + "," + str(G.number_of_edges()) + "," + to_ms(end_time-start_time))
+    #algo_jaccard_coefficient(G,G.edges(),verbose=True) 
+    
+    #get_hits(G)
+    #draw_all_shortest_path_for_single_node(G,"1")
+    #all_shortest_path_for_single_node(G,"12")
 
 
 
