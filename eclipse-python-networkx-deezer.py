@@ -129,15 +129,17 @@ def algo_shortest_path(G):
 #
 #filepath='/home/pagai/graph-data/deezer_clean_data/both.csv'    
 filepath='/home/pagai/graph-data/pokec/soc-pokec-relationships_weighted.txt'
-tmpfilepath = "/tmp/tmpfile.csv"
+tmpfilepath = "/tmp/tmpfile.csv" # Limiting the lines is not possible with read_weighted_edgelist. So introduced tempfile with line-extract to use read_weighted_edgelist for that file. 
 limit = 0
 seclimit=1
 operatorFunction="eq"
 verbose=False
 doExport=False
-createByImport=True
-doAlgo=True
+createByImport=False
+doAlgo=False
 algoVerbose=False
+
+importExportFileName = "/tmp/node_link_data_export_Kantenliste.json"
 
 #catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
 #for sig in catchable_sigs:
@@ -198,6 +200,19 @@ if createByImport:
 
 if doExport:
     export_graph_to_node_link_data(G, '/tmp/node_link_data_export_'+str(limit)+'.json', verbose=verbose)
+
+########## DELETE-test Clear ################
+numberOfNodes = G.number_of_nodes()
+numberOfEdges = G.number_of_edges()
+export_graph_to_node_link_data(G, importExportFileName+"_full", verbose=verbose)
+
+start_time_clear=time.time()
+G.clear()
+export_graph_to_node_link_data(G, importExportFileName, verbose=verbose)
+end_time_clear=time.time()
+print(numberOfNodes, numberOfEdges, to_ms(end_time_clear - start_time_clear), sep=",")
+
+
 
 if doAlgo:
 ############ ALGOS #############
