@@ -75,53 +75,6 @@ def all_shortest_path_for_single_node(G, source):
     #print(paths_single)
     print("RUNTIME ShortestPathsSingleNode for node " + source + " - " + str(_limit).split("_")[1] + " edges - " + str(numberOfUsers) + " other users : " + str(runTime) )
 
-def algo_shortest_path(G):
-    #user_list=[x for x,y in G.nodes(data=True)]
-#===============================================================================
-# subgraph Returns a SubGraph view of the subgraph induced on nodes.
-# The induced subgraph of the graph contains the nodes in nodes and the edges between those nodes.
-#===============================================================================
-#    subG = G.subgraph(user_list)
-#    for user1 in user_list:
-#        print(user1)
-    numberOfUsers = len(G.nodes())
-    user_list = list(G.nodes())
-    algoTime=time.time()
-    #Lahm
-#    for user1 in user_list:
-#       #print("Example: Calculating shortest paths from " + user1 + " to anyone...\r")
-#        for user2 in user_list:
-#            if (user1 != user2):
-#                try:
-#                    path = nx.shortest_path(subG, source=(user1), target=user2)
-#                except nx.NetworkXNoPath as e:
-#                    path = e
-#                except nx.NodeNotFound as e:
-#                    path = e
-    ### schnell
-    i = 0
-    pathcount = 0
-    while i < numberOfUsers:
-        user1 = user_list[i]
-        #print("STARTNODE: " + user1)
-        j = i + 1
-        while j < numberOfUsers:
-            pathcount = pathcount + 1
-            user2 = user_list[j]
-            
-         #   print(user2)
-            try:
-                path = nx.shortest_path(G, source=(user1), target=user2)
-            except nx.NetworkXNoPath as e:
-                path = e
-            except nx.NodeNotFound as e:
-                path = e
-            #print(path)
-            j = j + 1 
-    #print("RUNTIME : " + str(time.time() - start_time) )
-            #print("PATH: " + str(path))
-        i = i + 1
-    print("RUNTIME ShortestPath - " + str(_limit).split("_")[1] + " entries - " + str(numberOfUsers) + " users : " + to_ms(time.time() - algoTime) + ". Checked " + str(pathcount) + " paths." )
 
 #
 # MAIN
@@ -136,10 +89,24 @@ operatorFunction="eq"
 verbose=False
 doExport=False
 createByImport=False
-doAlgo=False
+importExportFileName = "/tmp/node_link_data_export_Kantenliste.json"
+
+doAlgo=True
+doAlgoPageRankTest=False
+doAlgoShortestPath=True
+doDegreeCentrality=False
+doSimRank=False
+doHITS=False
 algoVerbose=False
 
-importExportFileName = "/tmp/node_link_data_export_Kantenliste.json"
+operatorFunction="eq"
+drawit=False
+
+deleteTest=False
+testGetAll=False
+testSearch=False
+
+
 
 #catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
 #for sig in catchable_sigs:
@@ -188,9 +155,14 @@ if not createByImport:
         print(nx.info(G))
         print("########################")
 
+startTime=time.time()
+#nodes = G.nodes(data=True)
+#edges = G.edges(data=True)
+endTime=time.time()
+
 ############ Export/Import ##########
 if createByImport:
-    importFile='/tmp/node_link_data_export_'+str(limit)+'.json'
+    importFile='/tmp/node_link_data_export_edgelist_'+str(limit)+'.json'
     print("IMPORTING " + importFile)
     start_time = time.time()
     G = import_node_link_data_to_graph(importFile, verbose=verbose)
@@ -199,56 +171,78 @@ if createByImport:
         print(nx.info(G))
 
 if doExport:
-    export_graph_to_node_link_data(G, '/tmp/node_link_data_export_'+str(limit)+'.json', verbose=verbose)
+    export_graph_to_node_link_data(G, '/tmp/node_link_data_export_edgelist_'+str(limit)+'.json', verbose=verbose)
+
+
 
 ########## DELETE-test Clear ################
-numberOfNodes = G.number_of_nodes()
-numberOfEdges = G.number_of_edges()
-export_graph_to_node_link_data(G, importExportFileName+"_full", verbose=verbose)
+if deleteTest:
+    numberOfNodes = G.number_of_nodes()
+    numberOfEdges = G.number_of_edges()
+    export_graph_to_node_link_data(G, importExportFileName+"_full", verbose=verbose)
+    
+    start_time_clear=time.time()
+    G.clear()
+    export_graph_to_node_link_data(G, importExportFileName, verbose=verbose)
+    end_time_clear=time.time()
+    print(numberOfNodes, numberOfEdges, to_ms(end_time_clear - start_time_clear), sep=",")
 
-start_time_clear=time.time()
-G.clear()
-export_graph_to_node_link_data(G, importExportFileName, verbose=verbose)
-end_time_clear=time.time()
-print(numberOfNodes, numberOfEdges, to_ms(end_time_clear - start_time_clear), sep=",")
-
-
-
+   
+########### ALGO TESTS ################
 if doAlgo:
-############ ALGOS #############
+    #### SHORTEST PATH
+    if doAlgoShortestPath:
+        startTime=time.time()
+        #nodeList=[x for x,y in G.nodes(data=True) if (y.get('ACTOR') == True)]
+        #subG = G.subgraph(nodeList)
+        #algo_shortest_path(G,verbose=algoVerbose)
+        #algo_all_pairs_shortest_path_regular(G,nodeTypeForSubGraph=None,verbose=False)
+        
+        algo_all_pairs_dijkstra(G,nodeTypeForSubGraph=None,verbose=True,inputWeight='weight')
+        #algo_all_pairs_bellman_ford_path(G,verbose=True,inputWeight='weight')
+        
+        #all_pairs_shortest_path(G)
+        
+        #algo_all_pairs_shortest_path(G,verbose=False,inputWeight='weight')
+        #draw_all_shortest_path_for_single_node(G,"1")
+        #all_shortest_path_for_single_node(G,"12")
+        
+        
+        #### SHORTESTPATH ASTAR
+        #algo_all_pairs_shortest_path_astar(G,verbose=verbose)
+        endTime=time.time()
+        print(((G.number_of_nodes()**2)-G.number_of_nodes()),G.number_of_nodes(), G.number_of_edges(), to_ms(endTime - startTime), sep=",")
+        
+    #### PAGERANK    
+    if doAlgoPageRankTest:       
+        #### PAGERANK
+        weightInputForAlgos="weight"
+        #weightInputForAlgos=None
+        
+        print("==============================")
+        #algo_pagerank(G, "default",  weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=15)
+        # NUMPY IS OBSOLETE
+        #algo_pagerank(G, "numpy", weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=10)
+        algo_pagerank(G, "scipy", weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=0)
+        print("==============================")
+        print("EXECUTION TOOK: " + to_ms(time.time() - start_time))
     
-    #algo_shortest_path(G)
-    #algo_all_pairs_dijkstra(G,verbose=True,inputWeight='weight')
-    #algo_all_pairs_bellman_ford_path(G,verbose=True,inputWeight='weight')
-    
-    #all_pairs_shortest_path(G)
-    
-    #### PAGERANK
-    weightInputForAlgos="weight"
-    #weightInputForAlgos=None
-    
-    print("==============================")
-    #algo_pagerank(G, "default",  weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=15)
-    # NUMPY IS OBSOLETE
-    #algo_pagerank(G, "numpy", weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=10)
-    algo_pagerank(G, "scipy", weightInput=weightInputForAlgos, verbose=algoVerbose, maxLineOutput=0)
-    print("==============================")
-    print("EXECUTION TOOK: " + to_ms(time.time() - start_time))
+    #### SIMRANK    
+    if doSimRank:    #### SIMRANK
+        algo_simRank(G,verbose=True,max_iterations=1)
+
+    #### DEGREE CENTRALITY
+    if doDegreeCentrality:
+        verbose=True
+        #algo_degree_centrality(G, verbose=True)
+        #### OWN DEGREE CENTRALITY
+        #peng = sorted(G.degree, key=lambda x: x[1], reverse=True)
+        #if (verbose):
+        #    for bums in peng:
+        #        print(bums)
     
     
-    #### SIMRANK
-    #algo_simRank(G,verbose=True,max_iterations=1)
-    #algo_degree_centrality(G, verbose=True)
-    #algo_all_pairs_shortest_path(G,verbose=False,inputWeight='weight')
-    
-    #### OWN DEGREE CENTRALITY
-    #peng = sorted(G.degree, key=lambda x: x[1], reverse=True)
-    #if (verbose):
-    #    for bums in peng:
-    #        print(bums)
-    
-    
-    #algo_degree_centrality(G, verbose=False)
+        #algo_degree_centrality(G, verbose=False)
     
     
     #print("TIME: " + to_ms(end_time - start_time))
@@ -256,10 +250,10 @@ if doAlgo:
         
     #print(str(G.number_of_nodes()) + "," + str(G.number_of_edges()) + "," + to_ms(end_time-start_time))
     #algo_jaccard_coefficient(G,G.edges(),verbose=True) 
-    
-    #get_hits(G)
-    #draw_all_shortest_path_for_single_node(G,"1")
-    #all_shortest_path_for_single_node(G,"12")
+    #### HITS
+    if doHITS:#get_hits(G)
+        get_hits(G)#draw_all_shortest_path_for_single_node(G,"1")
+        #all_shortest_path_for_single_node(G,"12")
 
 
 
